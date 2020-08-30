@@ -107,7 +107,7 @@ class Chat extends React.Component {
   }
 
   componentDidUpdate() {
-    // Scroll down.
+    this.m && this.m.scrollIntoView({ behavior: 'smooth' });
   }
 
   render() {
@@ -128,8 +128,9 @@ class Chat extends React.Component {
           <div className="Chat-messages">
             {this.state.messages.map((e, i) => chatMessage(e, i))}
           </div>
+          <div ref={(e) => { this.m = e; }}></div>
           <form className="Chat-input" onSubmit={this.sendMessage}>
-            <input name="message" /><button>Send</button>
+            <textarea name="message" /><button>Send</button>
           </form>
         </div>
       </div>
