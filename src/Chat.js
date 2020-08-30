@@ -22,6 +22,10 @@ function chatMessage(message, key) {
     </div>);
 }
 
+function chatUsers(user) {
+  return (<li key={user.id}>{user.name}</li>);
+}
+
 class Chat extends React.Component {
   constructor(props) {
     super(props);
@@ -29,6 +33,7 @@ class Chat extends React.Component {
       socket: socketIOClient('http://localhost:9667'),
       user: '',
       room: 0,
+      users: [],
       messages: []
     };
 
@@ -39,9 +44,29 @@ class Chat extends React.Component {
       );
     });
 
+
+    this.state.socket.on('usersList', usersList => {
+      this.setState({users: usersList});
+    });
+
     this.state.socket.on('sendMessage', message => {
       this.state.messages.push(message);
       this.setState({ messages: this.state.messages });
+    });
+
+    this.state.socket.on('chatUser', chatUser => {
+      for (let i = chatUser.length - 1; i >= 0; i--) {
+        if (chatUser[i].online) {
+          this.state.users.push(chatUser[i]);
+        } else {
+          for (let j = this.state.users.length - 1; j >= 0; j--) {
+            if (chatUser[i].id === this.state.users[j].id) {
+              this.state.users.splice(j, 1);
+            }
+          }
+        }
+      }
+      this.setState({ users: this.state.users });
     });
 
     this.loginUser = this.loginUser.bind(this);
@@ -50,7 +75,7 @@ class Chat extends React.Component {
 
   loginUser(e) {
     if (e.target.user.value) {
-      this.state.socket.emit('loginUser', e.target.user.value);
+      this.state.socket.emit('loginUser', {name: e.target.user.value, room: 0});
       this.setState({ user: e.target.user.value });
     }
     e.preventDefault();
@@ -80,11 +105,7 @@ class Chat extends React.Component {
       :
       <div className="Chat">
         <ul className="Chat-users">
-          <li>Слон</li>
-          <li>Помидор</li>
-          <li>Master</li>
-          <li>Test user 4</li>
-          <li>Dead|Ok</li>
+          {this.state.users.map((e) => chatUsers(e))}
         </ul>
         <div className="Chat-right">
           <div className="Chat-messages">
