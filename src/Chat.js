@@ -39,6 +39,7 @@ class Chat extends React.Component {
 
     this.state.socket.on('loginUser', roomId => {
       this.setState({ room: roomId });
+      window.location.hash = `room=${roomId}`;
       console.log(
         `User ${this.state.user} logged into room ${this.state.room}`
       );
@@ -46,7 +47,7 @@ class Chat extends React.Component {
 
 
     this.state.socket.on('usersList', usersList => {
-      this.setState({users: usersList});
+      this.setState({ users: usersList });
     });
 
     this.state.socket.on('sendMessage', message => {
@@ -75,7 +76,23 @@ class Chat extends React.Component {
 
   loginUser(e) {
     if (e.target.user.value) {
-      this.state.socket.emit('loginUser', {name: e.target.user.value, room: 0});
+      let h = window.location.hash;
+      let room = 0;
+      if (h.indexOf('room=') > -1) {
+        h = h.substr(1, h.length).split('&');
+
+        for (let i = 0; i < h.length; i++) {
+          let p = h[i].split('=');
+
+          if (p.length === 2 && p[0] === 'room') {
+            room = p[1];
+            break;
+          }
+        }
+
+      }
+
+      this.state.socket.emit('loginUser', { name: e.target.user.value, room: room });
       this.setState({ user: e.target.user.value });
     }
     e.preventDefault();
