@@ -8,68 +8,115 @@ let userID = 0;
 
 io.on('connection', client => {
   client.roomId = ++room;
-  // client.roomId = 1;
-  client.loggedIn = false;
+
+  // User id for React user list key.
   client.userId = ++userID;
+
   console.log(`[${client.id}] Connected!`);
 
   clients.push(client);
 
   client.on('loginUser', userData => {
-    client.userName = userData.name;
-    if(userData.room > 0) {
-      client.roomId = userData.room;
-    }
-    client.loggedIn = true;
-    console.log(`[${client.id}] Logged in user ${client.userName} to room ${client.roomId}`);
-    client.emit('loginUser', {roomId: client.roomId, userId: client.userId});
+    client.name = userData.name;
 
+    // Place user to desired room.
+    if (userData.room) {
+      client.roomId = +userData.room;
+    }
+
+    console.log(
+      `[${client.id}] Logged in user ${client.name} to room ${client.roomId}`
+    );
+
+    // Send to user his room number and id.
+    client.emit('loginUser', {
+      roomId: client.roomId,
+      userId: client.userId
+    });
+
+    // Notify all users in the room for the new user joined.
     let usersList = [];
     for (let c = 0; c < clients.length; c++) {
-      if (clients[c].loggedIn && clients[c].roomId == client.roomId) {
-        clients[c].emit('chatUser', [{ id: client.userId, name: userData.name, online: true }]);
-        usersList.push({ id: clients[c].userId, name: clients[c].userName, online: clients[c].online });
+      if (clients[c].roomId == client.roomId) {
+
+        clients[c].emit(
+          'chatUser', [{
+            id: client.userId,
+            name: client.name,
+            online: true
+          }]);
+
+        usersList.push({
+          id: clients[c].userId,
+          name: clients[c].name
+        });
+
       }
     }
+
+    // Send users list to the new user.
     client.emit('usersList', usersList);
   });
 
+  // User sent message,
+  // so moderate it and send to all users in the room.
   client.on('sendMessage', messageText => {
-    console.log(`[${client.id}] ${client.userName} in room ${client.roomId} message: ${messageText}`);
+
+    console.log(
+      `[${client.id}] ${client.name} in ` +
+      `room ${client.roomId} message: ${messageText}`
+    );
 
     for (let c = 0; c < clients.length; c++) {
-      if (clients[c].loggedIn && clients[c].roomId == client.roomId) {
+      if (clients[c].roomId == client.roomId) {
+
         clients[c].emit('sendMessage', {
-          author: client.userName,
+          author: client.name,
           text: messageText,
           datetime: new Date().toLocaleTimeString(),
           local: clients[c] === client
         });
-        console.log(`Resent message to ${clients[c].userName}`);
+
+        console.log(
+          `Resent message to ${clients[c].name}`
+        );
+
       }
     }
   });
 
-
+  // User has leaved chat.
   client.on('disconnect', () => {
-    console.log(`[${client.id}] Disconnected ${client.userName} from room = ${client.roomId}`);
-    client.loggedIn = false;
+
+    console.log(
+      `[${client.id}] Disconnected ${client.name}` +
+      ` from room = ${client.roomId}`
+    );
 
     clients.splice(clients.indexOf(client), 1);
 
+    // Notify all users in the room for the user has leaved.
     for (let c = 0; c < clients.length; c++) {
-      if (clients[c].loggedIn && clients[c].roomId == client.roomId) {
-        clients[c].emit('chatUser', [{ id: client.userId, name: client.userName, online: client.loggedIn }]);
+      if (clients[c].roomId == client.roomId) {
+
+        clients[c].emit(
+          'chatUser', [{
+            id: client.userId,
+            name: client.name,
+            online: false
+          }]);
+
       }
     }
   });
 });
 
-// Ctrl+C
+// Ctrl+C pressed!
 process.on('SIGINT', () => {
   server.close();
   setTimeout(process.exit, 1000, 0);
 });
+
 
 server.listen(PORT);
 console.log("listening port " + PORT);

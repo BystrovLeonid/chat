@@ -18,14 +18,15 @@ class Chat extends React.Component {
     this.state.socket.on('loginUser', data => {
       this.setState({ room: data.roomId, userId: data.userId });
       window.location.hash = `room=${data.roomId}`;
+      document.title = `Chat ${this.state.user}`;
       console.log(
         `User ${this.state.user} (id is ${this.state.userId}) logged into room ${this.state.room}`
       );
     });
 
     this.state.socket.on('connect', () => {
-      this.setState({ online: true });
-      this.state.user && this.reLoginUser();
+      this.setState({ online: true, users: []});
+      this.state.userId && this.reLoginUser();
     });
 
     this.state.socket.on('disconnect', () => {
@@ -42,6 +43,7 @@ class Chat extends React.Component {
     });
 
     this.state.socket.on('chatUser', chatUser => {
+      console.log(chatUser);
       for (let i = chatUser.length - 1; i >= 0; i--) {
         if (chatUser[i].online) {
           this.state.users.push(chatUser[i]);
@@ -63,11 +65,13 @@ class Chat extends React.Component {
 
 
   chatUsers(user) {
-    return (this.state.userId === user.id
+    return (
+      this.state.userId === user.id
       ?
       <li className="Chat-users-me" key={user.id}>{user.name}</li>
       :
-      <li key={user.id}>{user.name}</li>);
+      <li key={user.id}>{user.name}</li>
+      );
   }
 
   chatMessage(message, key) {
@@ -86,7 +90,8 @@ class Chat extends React.Component {
         <div className="Chat-message-datetime">
           {message.datetime}
         </div>
-      </div>);
+      </div>
+      );
   }
 
   offlineMessage(t) {
