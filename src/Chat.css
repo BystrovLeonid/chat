@@ -71,10 +71,6 @@ body {
 
 .Chat-input input {
   width: 88%;
-  border: none;
-  background-color: #596379;
-  color: white;
-  font-size: 12px;
   padding: 13px;
 }
 
@@ -85,6 +81,32 @@ body {
   background-color: #596379;
   color: white;
 }
+
+
+.Chat-userlogin {
+  height: 40px;
+  background-color: #596379;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+}
+
+input[type="submit"] {
+  border: none;
+  background-color: #596379;
+  color: white;
+}
+
+input[type="text"] {
+  border: none;
+  background-color: #596379;
+  color: white;
+  font-size: 12px;
+}
+
+
+
 
 .Chat-messages {
   display: flex;

@@ -112,6 +112,7 @@ class Chat extends React.Component {
   }
 
   componentDidMount() {
+    document.title = 'Chat';
     this.l.focus();
   }
 
