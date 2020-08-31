@@ -162,3 +162,17 @@ input[type="text"] {
   margin-top: 5px;
   text-align: right;
 }
+
+
+.Chat-offline {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  height: 40px;
+  width: 80%;
+  background-color: #596379;
+}

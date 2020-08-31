@@ -11,7 +11,8 @@ class Chat extends React.Component {
       userId: 0,
       room: 0,
       users: [],
-      messages: []
+      messages: [],
+      online: false // this.state.socket.connected // Lies!?
     };
 
     this.state.socket.on('loginUser', data => {
@@ -22,6 +23,14 @@ class Chat extends React.Component {
       );
     });
 
+    this.state.socket.on('connect', () => {
+      this.setState({ online: true });
+      this.state.user && this.reLoginUser();
+    });
+
+    this.state.socket.on('disconnect', () => {
+      this.setState({ online: false });
+    });
 
     this.state.socket.on('usersList', usersList => {
       this.setState({ users: usersList });
@@ -48,6 +57,7 @@ class Chat extends React.Component {
     });
 
     this.loginUser = this.loginUser.bind(this);
+    this.reLoginUser = this.reLoginUser.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
   }
 
@@ -80,7 +90,7 @@ class Chat extends React.Component {
   }
 
   loginUser(e) {
-    if (e.target.user.value) {
+    if (e.target.user.value.trim()) {
       let h = window.location.hash;
       let room = 0;
       if (h.indexOf('room=') > -1) {
@@ -97,10 +107,13 @@ class Chat extends React.Component {
 
       }
 
-      this.state.socket.emit('loginUser', { name: e.target.user.value, room: room });
-      this.setState({ user: e.target.user.value });
+      this.state.socket.emit('loginUser', { name: e.target.user.value.trim(), room: room });
+      this.setState({ user: e.target.user.value.trim() });
     }
     e.preventDefault();
+  }
+  reLoginUser() {
+    this.state.socket.emit('loginUser', { name: this.state.user, room: this.state.room });
   }
 
   sendMessage(e) {
@@ -113,22 +126,27 @@ class Chat extends React.Component {
 
   componentDidMount() {
     document.title = 'Chat';
-    this.l.focus();
+    this.l && this.l.focus();
   }
 
   componentDidUpdate() {
     this.b && this.b.scrollIntoView({ behavior: 'smooth' });
-    this.b && this.m.focus();
+    this.m && this.m.focus();
   }
 
   render() {
     return (this.state.room === 0 ?
 
       <div className="Chat-login">
+      {
+        this.state.online ?
         <form className="Chat-userlogin" onSubmit={this.loginUser}>
           <input type="text" name="user" ref={(l) => { this.l = l; }} />
           <input type="submit" value="Login" />
         </form>
+        :
+        <div>Server temporary offline...</div>
+      }
       </div>
       :
       <div className="Chat">
@@ -144,10 +162,15 @@ class Chat extends React.Component {
             {this.state.messages.map((e, i) => this.chatMessage(e, i))}
           </div>
           <div ref={(b) => { this.b = b; }}></div>
-          <form className="Chat-input" onSubmit={this.sendMessage}>
-            <input type="text" name="message" ref={(m) => { this.m = m; }} />
-            <button>Send</button>
-          </form>
+          {
+            this.state.online ?
+              <form className="Chat-input" onSubmit={this.sendMessage}>
+                <input type="text" name="message" ref={(m) => { this.m = m; }} />
+                <button>Send</button>
+              </form>
+              :
+              <div className="Chat-offline">Server temporary offline...</div>
+          }
         </div>
       </div>
 

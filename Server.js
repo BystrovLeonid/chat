@@ -15,10 +15,10 @@ io.on('connection', client => {
 
   clients.push(client);
 
-  client.on('loginUser', userName => {
-    client.userName = userName.name;
-    if(userName.room > 0) {
-      client.roomId = userName.room;
+  client.on('loginUser', userData => {
+    client.userName = userData.name;
+    if(userData.room > 0) {
+      client.roomId = userData.room;
     }
     client.loggedIn = true;
     console.log(`[${client.id}] Logged in user ${client.userName} to room ${client.roomId}`);
@@ -27,7 +27,7 @@ io.on('connection', client => {
     let usersList = [];
     for (let c = 0; c < clients.length; c++) {
       if (clients[c].loggedIn && clients[c].roomId == client.roomId) {
-        clients[c].emit('chatUser', [{ id: client.userId, name: userName.name, online: true }]);
+        clients[c].emit('chatUser', [{ id: client.userId, name: userData.name, online: true }]);
         usersList.push({ id: clients[c].userId, name: clients[c].userName, online: clients[c].online });
       }
     }
