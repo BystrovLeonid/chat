@@ -53,13 +53,13 @@ class Chat extends React.Component {
 
 
   chatUsers(user) {
-    return (this.state.userId === user.id 
-      ? 
-      <li className="Chat-users-me" key={user.id}>{user.name}</li> 
-      : 
+    return (this.state.userId === user.id
+      ?
+      <li className="Chat-users-me" key={user.id}>{user.name}</li>
+      :
       <li key={user.id}>{user.name}</li>);
   }
-  
+
   chatMessage(message, key) {
     let classes = 'Chat-message';
     if (message.local) {
@@ -78,7 +78,7 @@ class Chat extends React.Component {
         </div>
       </div>);
   }
-  
+
   loginUser(e) {
     if (e.target.user.value) {
       let h = window.location.hash;
@@ -111,9 +111,9 @@ class Chat extends React.Component {
     e.preventDefault();
   }
 
-componentDidMount() {
-  this.l.focus();
-}
+  componentDidMount() {
+    this.l.focus();
+  }
 
   componentDidUpdate() {
     this.b && this.b.scrollIntoView({ behavior: 'smooth' });
@@ -125,14 +125,18 @@ componentDidMount() {
 
       <div className="Chat-login">
         <form className="Chat-userlogin" onSubmit={this.loginUser}>
-          <input type="text" name="user" ref={(l) => { this.l = l; }}/>
+          <input type="text" name="user" ref={(l) => { this.l = l; }} />
           <input type="submit" value="Login" />
         </form>
       </div>
       :
       <div className="Chat">
         <ul className="Chat-users">
-          {this.state.users.map((e) => this.chatUsers(e))}
+          {
+            this.state.users
+              .sort((a, b) => a.name > b.name ? 1 : -1)
+              .map((e) => this.chatUsers(e))
+          }
         </ul>
         <div className="Chat-right">
           <div className="Chat-messages">
