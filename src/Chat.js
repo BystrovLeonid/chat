@@ -12,50 +12,67 @@ class Chat extends React.Component {
       room: 0,
       users: [],
       messages: [],
-      online: false // this.state.socket.connected // Lies!?
+      online: false // this.state.socket.connected
     };
 
+    // On server authorized user.
     this.state.socket.on('loginUser', data => {
-      this.setState({ room: data.roomId, userId: data.userId });
+      this.setState({
+        room: data.roomId,
+        userId: data.userId
+      });
+
+      // Add room id to address line after #
       window.location.hash = `room=${data.roomId}`;
-      document.title = `Chat ${this.state.user}`;
-      console.log(
-        `User ${this.state.user} (id is ${this.state.userId}) logged into room ${this.state.room}`
-      );
+
+      document.title = `${this.state.user} - Chat`;
     });
 
+    // On connect to server.
     this.state.socket.on('connect', () => {
-      this.setState({ online: true, users: []});
-      this.state.userId && this.reLoginUser();
+      this.setState({
+        online: true,
+        users: []
+      });
+
+      // If user authorized then just relogin,
+      // else focus on login field.
+      if (this.state.userId) {
+        this.reLoginUser();
+      } else {
+        this.loginField && this.loginField.focus();
+      }
     });
 
     this.state.socket.on('disconnect', () => {
       this.setState({ online: false });
     });
 
+    // Receive online users list.
     this.state.socket.on('usersList', usersList => {
       this.setState({ users: usersList });
     });
 
+    // Received message from chat user.
     this.state.socket.on('sendMessage', message => {
       this.state.messages.push(message);
       this.setState({ messages: this.state.messages });
     });
 
+    // Then user joined or leaved chat.
     this.state.socket.on('chatUser', chatUser => {
-      console.log(chatUser);
-      for (let i = chatUser.length - 1; i >= 0; i--) {
-        if (chatUser[i].online) {
-          this.state.users.push(chatUser[i]);
+      chatUser.forEach(u => {
+        if (u.online) {
+          // Add to user list.
+          this.state.users.push(u);
         } else {
-          for (let j = this.state.users.length - 1; j >= 0; j--) {
-            if (chatUser[i].id === this.state.users[j].id) {
-              this.state.users.splice(j, 1);
-            }
-          }
+          // Remove from user list.
+          this.state.users = this.state.users.filter(e => e.id !== u.id);
         }
-      }
-      this.setState({ users: this.state.users });
+      });
+
+      // Remove doubles, sometimes server sends same chatUser.
+      this.setState({ users: [...new Set(this.state.users)] });
     });
 
     this.loginUser = this.loginUser.bind(this);
@@ -63,22 +80,26 @@ class Chat extends React.Component {
     this.sendMessage = this.sendMessage.bind(this);
   }
 
-
+  // List item, user, left side.
   chatUsers(user) {
     return (
       this.state.userId === user.id
-      ?
-      <li className="Chat-users-me" key={user.id}>{user.name}</li>
-      :
-      <li key={user.id}>{user.name}</li>
-      );
+        ?
+        <li className="Chat-users-me" key={user.id}>{user.name}</li>
+        :
+        <li key={user.id}>{user.name}</li>
+    );
   }
 
+  //
   chatMessage(message, key) {
     let classes = 'Chat-message';
+
+    // If this is my message.
     if (message.local) {
       classes += ' Chat-message-my';
     }
+
     return (
       <div key={key} className={classes}>
         <div className="Chat-message-author">
@@ -91,17 +112,21 @@ class Chat extends React.Component {
           {message.datetime}
         </div>
       </div>
-      );
+    );
   }
 
+  // Shows this message then socket server offline.
   offlineMessage(t) {
     return (
       <span className="Chat-offline-message">{t}</span>
     );
   }
 
+
   loginUser(e) {
     if (e.target.user.value.trim()) {
+
+      // Get chat room id from address line.
       let h = window.location.hash;
       let room = 0;
       if (h.indexOf('room=') > -1) {
@@ -118,18 +143,37 @@ class Chat extends React.Component {
 
       }
 
-      this.state.socket.emit('loginUser', { name: e.target.user.value.trim(), room: room });
-      this.setState({ user: e.target.user.value.trim() });
+      // Send user and desired room to server.
+      this.state.socket.emit(
+        'loginUser', {
+        name: e.target.user.value.trim(),
+        room: room
+      });
+
+      this.setState({
+        user: e.target.user.value.trim()
+      });
     }
     e.preventDefault();
   }
+
   reLoginUser() {
-    this.state.socket.emit('loginUser', { name: this.state.user, room: this.state.room });
+    this.state.socket.emit(
+      'loginUser', {
+      name: this.state.user,
+      room: this.state.room
+    });
   }
 
+  // Send message to server.
   sendMessage(e) {
     if (e.target.message.value.trim()) {
-      this.state.socket.emit('sendMessage', e.target.message.value.trim());
+
+      this.state.socket.emit(
+        'sendMessage',
+        e.target.message.value.trim()
+      );
+
       e.target.message.value = '';
     }
     e.preventDefault();
@@ -137,12 +181,12 @@ class Chat extends React.Component {
 
   componentDidMount() {
     document.title = 'Chat';
-    this.l && this.l.focus();
+    this.loginField && this.loginField.focus();
   }
 
   componentDidUpdate() {
-    this.b && this.b.scrollIntoView({ behavior: 'smooth' });
-    this.m && this.m.focus();
+    this.bottomScrollLine && this.bottomScrollLine.scrollIntoView({ behavior: 'smooth' });
+    this.messageInputField && this.messageInputField.focus();
   }
 
   render() {
@@ -153,7 +197,7 @@ class Chat extends React.Component {
           this.state.online
             ?
             <form className="Chat-userlogin" onSubmit={this.loginUser}>
-              <input type="text" name="user" ref={(l) => { this.l = l; }} />
+              <input type="text" name="user" ref={(l) => { this.loginField = l; }} />
               <input type="submit" value="Login" />
             </form>
             :
@@ -173,12 +217,12 @@ class Chat extends React.Component {
           <div className="Chat-messages">
             {this.state.messages.map((e, i) => this.chatMessage(e, i))}
           </div>
-          <div ref={(b) => { this.b = b; }}></div>
+          <div ref={(b) => { this.bottomScrollLine = b; }}></div>
           {
             this.state.online
               ?
               <form className="Chat-input" onSubmit={this.sendMessage}>
-                <input type="text" name="message" ref={(m) => { this.m = m; }} />
+                <input type="text" name="message" ref={(m) => { this.messageInputField = m; }} />
                 <button>Send</button>
               </form>
               :
