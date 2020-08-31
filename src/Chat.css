@@ -2,6 +2,10 @@
   outline: none;
 }
 
+body {
+  overflow-x: hidden;
+}
+
 .Chat-login {
   background-color: #282c34;
   min-height: 100vh;
@@ -21,7 +25,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: calc(10px + 0.5vw);
   color: white;
 }
 
@@ -39,12 +43,17 @@
   margin: 0;
 }
 
+.Chat-users-me {
+  font-style: italic;
+  font-weight: bold;
+}
+
 .Chat-right {
   margin-left: 20%;
   background-color: #30343d;
-  min-height: calc(100vh - 100px);
+  min-height: calc(100vh - 40px);
   width: 80%;
-  margin-bottom: 100px;
+  margin-bottom: 40px;
 }
 
 .Chat-input {
@@ -55,22 +64,22 @@
   position: fixed;
   bottom: 0;
   right: 0;
-  height: 100px;
+  height: 40px;
   width: 80%;
-  background-color: #32363f;
-  padding-top: 10px;
+  background-color: #596379;
 }
 
-.Chat-input textarea {
-  width: 90%;
+.Chat-input input {
+  width: 88%;
   border: none;
   background-color: #596379;
   color: white;
   font-size: 12px;
-  padding: 5px;
+  padding: 13px;
 }
 
 .Chat-input button {
+  padding: 0px;
   width: 8%;
   border: none;
   background-color: #596379;
@@ -93,6 +102,7 @@
   margin: 5px 0;
   padding: 5px;
   border-radius: 5px;
+  word-wrap: break-word;
 }
 
 .Chat-message::before {

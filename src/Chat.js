@@ -2,46 +2,23 @@ import React from 'react';
 import './Chat.css';
 import socketIOClient from 'socket.io-client';
 
-
-function chatMessage(message, key) {
-  let classes = 'Chat-message';
-  if (message.local) {
-    classes += ' Chat-message-my';
-  }
-  return (
-    <div key={key} className={classes}>
-      <div className="Chat-message-author">
-        {message.author}
-      </div>
-      <div className="Chat-message-text">
-        {message.text}
-      </div>
-      <div className="Chat-message-datetime">
-        {message.datetime}
-      </div>
-    </div>);
-}
-
-function chatUsers(user) {
-  return (<li key={user.id}>{user.name}</li>);
-}
-
 class Chat extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      socket: socketIOClient('http://localhost:9667'),
+      socket: socketIOClient(`http://${window.location.hostname}:9667`),
       user: '',
+      userId: 0,
       room: 0,
       users: [],
       messages: []
     };
 
-    this.state.socket.on('loginUser', roomId => {
-      this.setState({ room: roomId });
-      window.location.hash = `room=${roomId}`;
+    this.state.socket.on('loginUser', data => {
+      this.setState({ room: data.roomId, userId: data.userId });
+      window.location.hash = `room=${data.roomId}`;
       console.log(
-        `User ${this.state.user} logged into room ${this.state.room}`
+        `User ${this.state.user} (id is ${this.state.userId}) logged into room ${this.state.room}`
       );
     });
 
@@ -74,6 +51,34 @@ class Chat extends React.Component {
     this.sendMessage = this.sendMessage.bind(this);
   }
 
+
+  chatUsers(user) {
+    return (this.state.userId === user.id 
+      ? 
+      <li className="Chat-users-me" key={user.id}>{user.name}</li> 
+      : 
+      <li key={user.id}>{user.name}</li>);
+  }
+  
+  chatMessage(message, key) {
+    let classes = 'Chat-message';
+    if (message.local) {
+      classes += ' Chat-message-my';
+    }
+    return (
+      <div key={key} className={classes}>
+        <div className="Chat-message-author">
+          {message.author}
+        </div>
+        <div className="Chat-message-text">
+          {message.text}
+        </div>
+        <div className="Chat-message-datetime">
+          {message.datetime}
+        </div>
+      </div>);
+  }
+  
   loginUser(e) {
     if (e.target.user.value) {
       let h = window.location.hash;
@@ -99,15 +104,20 @@ class Chat extends React.Component {
   }
 
   sendMessage(e) {
-    if (e.target.message.value) {
-      this.state.socket.emit('sendMessage', e.target.message.value);
+    if (e.target.message.value.trim()) {
+      this.state.socket.emit('sendMessage', e.target.message.value.trim());
       e.target.message.value = '';
     }
     e.preventDefault();
   }
 
+componentDidMount() {
+  this.l.focus();
+}
+
   componentDidUpdate() {
-    this.m && this.m.scrollIntoView({ behavior: 'smooth' });
+    this.b && this.b.scrollIntoView({ behavior: 'smooth' });
+    this.b && this.m.focus();
   }
 
   render() {
@@ -115,22 +125,23 @@ class Chat extends React.Component {
 
       <div className="Chat-login">
         <form className="Chat-userlogin" onSubmit={this.loginUser}>
-          <input type="text" name="user" />
+          <input type="text" name="user" ref={(l) => { this.l = l; }}/>
           <input type="submit" value="Login" />
         </form>
       </div>
       :
       <div className="Chat">
         <ul className="Chat-users">
-          {this.state.users.map((e) => chatUsers(e))}
+          {this.state.users.map((e) => this.chatUsers(e))}
         </ul>
         <div className="Chat-right">
           <div className="Chat-messages">
-            {this.state.messages.map((e, i) => chatMessage(e, i))}
+            {this.state.messages.map((e, i) => this.chatMessage(e, i))}
           </div>
-          <div ref={(e) => { this.m = e; }}></div>
+          <div ref={(b) => { this.b = b; }}></div>
           <form className="Chat-input" onSubmit={this.sendMessage}>
-            <textarea name="message" /><button>Send</button>
+            <input type="text" name="message" ref={(m) => { this.m = m; }} />
+            <button>Send</button>
           </form>
         </div>
       </div>

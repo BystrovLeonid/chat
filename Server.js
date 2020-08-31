@@ -22,7 +22,7 @@ io.on('connection', client => {
     }
     client.loggedIn = true;
     console.log(`[${client.id}] Logged in user ${client.userName} to room ${client.roomId}`);
-    client.emit('loginUser', client.roomId);
+    client.emit('loginUser', {roomId: client.roomId, userId: client.userId});
 
     let usersList = [];
     for (let c = 0; c < clients.length; c++) {
