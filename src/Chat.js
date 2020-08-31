@@ -1,5 +1,5 @@
 import React from 'react';
-import './Chat.css';
+import './css/Chat.css';
 import socketIOClient from 'socket.io-client';
 
 class Chat extends React.Component {
