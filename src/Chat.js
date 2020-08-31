@@ -89,6 +89,12 @@ class Chat extends React.Component {
       </div>);
   }
 
+  offlineMessage(t) {
+    return (
+      <span className="Chat-offline-message">{t}</span>
+    );
+  }
+
   loginUser(e) {
     if (e.target.user.value.trim()) {
       let h = window.location.hash;
@@ -138,15 +144,16 @@ class Chat extends React.Component {
     return (this.state.room === 0 ?
 
       <div className="Chat-login">
-      {
-        this.state.online ?
-        <form className="Chat-userlogin" onSubmit={this.loginUser}>
-          <input type="text" name="user" ref={(l) => { this.l = l; }} />
-          <input type="submit" value="Login" />
-        </form>
-        :
-        <div>Server temporary offline...</div>
-      }
+        {
+          this.state.online
+            ?
+            <form className="Chat-userlogin" onSubmit={this.loginUser}>
+              <input type="text" name="user" ref={(l) => { this.l = l; }} />
+              <input type="submit" value="Login" />
+            </form>
+            :
+            <div>{this.offlineMessage('Connecting...')}</div>
+        }
       </div>
       :
       <div className="Chat">
@@ -163,13 +170,14 @@ class Chat extends React.Component {
           </div>
           <div ref={(b) => { this.b = b; }}></div>
           {
-            this.state.online ?
+            this.state.online
+              ?
               <form className="Chat-input" onSubmit={this.sendMessage}>
                 <input type="text" name="message" ref={(m) => { this.m = m; }} />
                 <button>Send</button>
               </form>
               :
-              <div className="Chat-offline">Server temporary offline...</div>
+              <div className="Chat-offline">{this.offlineMessage('Server temporary offline...')}</div>
           }
         </div>
       </div>

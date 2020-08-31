@@ -163,7 +163,6 @@ input[type="text"] {
   text-align: right;
 }
 
-
 .Chat-offline {
   display: flex;
   flex-direction: row;
@@ -175,4 +174,27 @@ input[type="text"] {
   height: 40px;
   width: 80%;
   background-color: #596379;
+}
+
+.Chat-offline-message {
+  display: block;
+  animation: 0.1s linear 1s 5 alternate shake;
+}
+
+@keyframes shake {
+  0% {
+    transform: translate(-1px, 1px);
+  }
+  25% {
+    transform: translate(1px, -1px);
+  }
+  50% {
+    transform: translate(-1px, -1px);
+  }
+  75% {
+    transform: translate(-1px, 1px);
+  }
+  100% {
+    transform: translate(1px, -1px);
+  }
 }
