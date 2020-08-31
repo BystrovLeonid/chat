@@ -12,7 +12,8 @@ class Chat extends React.Component {
       room: 0,
       users: [],
       messages: [],
-      online: false // this.state.socket.connected
+      online: false, // this.state.socket.connected
+      streaming: false
     };
 
     // On server authorized user.
@@ -78,24 +79,68 @@ class Chat extends React.Component {
     this.loginUser = this.loginUser.bind(this);
     this.reLoginUser = this.reLoginUser.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
+    this.startStream = this.startStream.bind(this);
+  }
+
+  //
+  startStream(e) {
+
+    const constraints = {
+      'video': true,
+      'audio': true
+    }
+
+    if (this.state.streaming) { // Start streaming.
+
+      document.getElementById(this.state.userId).srcObject.getTracks().forEach(
+        track => track.stop()
+      );
+
+      this.setState({ streaming: false });
+    } else { // Stop streaming.
+      this.setState({ streaming: true });
+
+      setTimeout(() => {
+
+        navigator.mediaDevices.getUserMedia(constraints)
+          .then(stream => {
+            console.log('Got MediaStream:', stream);
+            const videoElement = document.getElementById(this.state.userId);
+            videoElement.srcObject = stream;
+          })
+          .catch(error => {
+            console.error('Error opening video camera.', error);
+            this.setState({ streaming: false });
+          });
+
+      }, 100);
+    }
   }
 
   // Users, left side.
   chatUsers(user) {
-    let classes = 'Chat-user';
+    let userClasses = 'Chat-user';
+    let videoClasses = 'Chat-user-camera';
     let id = user.id;
+    let me = this.state.userId === id;
+
+    // Streaming now.
+    if (this.state.streaming) {
+      videoClasses += ' Chat-user-camera-no-video';
+    }
 
     // If it's me.
-    if (this.state.userId === user.id) {
-      classes += ' Chat-user-me';
+    if (me) {
+      userClasses += ' Chat-user-me';
     }
 
     return (
-      <div className={classes} key={user.id}>
+      <div className={userClasses} key={user.id}>
         <div className="Chat-user-name">
           {user.name}
+          {me && <button className={videoClasses} onClick={this.startStream}></button>}
         </div>
-        <div className="Chat-user-video" id={id}></div>
+        {me && this.state.streaming && <video className="Chat-user-video" id={id} autoPlay playsInline />}
       </div>
     );
   }
