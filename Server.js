@@ -25,7 +25,7 @@ io.on('connection', client => {
     }
 
     console.log(
-      `[${client.id}] Logged in user ${client.name} to room ${client.roomId}`
+      `[${client.id}] ${client.name} with id ${client.userId} joined room ${client.roomId}`
     );
 
     // Send to user his room number and id.

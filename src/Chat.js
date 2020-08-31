@@ -40,7 +40,7 @@ class Chat extends React.Component {
       if (this.state.userId) {
         this.reLoginUser();
       } else {
-        this.loginField && this.loginField.focus();
+        this.loginInputField && this.loginInputField.focus();
       }
     });
 
@@ -80,14 +80,23 @@ class Chat extends React.Component {
     this.sendMessage = this.sendMessage.bind(this);
   }
 
-  // List item, user, left side.
+  // Users, left side.
   chatUsers(user) {
+    let classes = 'Chat-user';
+    let id = user.id;
+
+    // If it's me.
+    if (this.state.userId === user.id) {
+      classes += ' Chat-user-me';
+    }
+
     return (
-      this.state.userId === user.id
-        ?
-        <li className="Chat-users-me" key={user.id}>{user.name}</li>
-        :
-        <li key={user.id}>{user.name}</li>
+      <div className={classes} key={user.id}>
+        <div className="Chat-user-name">
+          {user.name}
+        </div>
+        <div className="Chat-user-video" id={id}></div>
+      </div>
     );
   }
 
@@ -181,7 +190,7 @@ class Chat extends React.Component {
 
   componentDidMount() {
     document.title = 'Chat';
-    this.loginField && this.loginField.focus();
+    this.loginInputField && this.loginInputField.focus();
   }
 
   componentDidUpdate() {
@@ -197,7 +206,7 @@ class Chat extends React.Component {
           this.state.online
             ?
             <form className="Chat-userlogin" onSubmit={this.loginUser}>
-              <input type="text" name="user" ref={(l) => { this.loginField = l; }} />
+              <input type="text" name="user" ref={(l) => { this.loginInputField = l; }} />
               <input type="submit" value="Login" />
             </form>
             :
@@ -206,13 +215,13 @@ class Chat extends React.Component {
       </div>
       :
       <div className="Chat">
-        <ul className="Chat-users">
+        <div className="Chat-users">
           {
             this.state.users
               .sort((a, b) => a.name > b.name ? 1 : -1)
               .map((e) => this.chatUsers(e))
           }
-        </ul>
+        </div>
         <div className="Chat-right">
           <div className="Chat-messages">
             {this.state.messages.map((e, i) => this.chatMessage(e, i))}
