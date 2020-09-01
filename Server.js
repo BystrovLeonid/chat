@@ -1,3 +1,5 @@
+const { off } = require('process');
+
 const server = require('http').createServer();
 const io = require('socket.io')(server);
 
@@ -17,12 +19,21 @@ io.on('connection', client => {
   clients.push(client);
 
   client.on('loginUser', userData => {
-    client.name = userData.name;
+
+    client.name = userData.name.length > 8
+      ?
+      userData.name.substring(0, 8)
+      :
+      userData.name;
+
+    client.streaming = false;
+    client.online = true;
 
     // Place user to desired room.
     if (userData.room) {
       client.roomId = +userData.room;
     }
+    client.join(client.roomId);
 
     console.log(
       `[${client.id}] ${client.name} with id ${client.userId} joined room ${client.roomId}`
@@ -43,12 +54,15 @@ io.on('connection', client => {
           'chatUser', [{
             id: client.userId,
             name: client.name,
-            online: true
+            online: true,
+            streaming: false
           }]);
 
         usersList.push({
           id: clients[c].userId,
-          name: clients[c].name
+          name: clients[c].name,
+          online: clients[c].online,
+          streaming: clients[c].streaming
         });
 
       }
@@ -85,6 +99,52 @@ io.on('connection', client => {
     }
   });
 
+  //
+  client.on('stream', (data) => {
+    for (let c = 0; c < clients.length; c++) {
+      if (clients[c].userId !== data.id && clients[c].roomId === client.roomId) {
+
+        client.streaming = data.streaming;
+
+        clients[c].emit(
+          'chatUser', [{
+            id: client.userId,
+            name: client.name,
+            online: true,
+            streaming: client.streaming
+          }]);
+
+        console.log(
+          `Broadcast stream to ${clients[c].name}`
+        );
+
+      }
+    }
+  });
+
+  // Signaling channel for video streaming.
+  client.on('message', message => {
+
+    console.log(message);
+
+    for (let c = 0; c < clients.length; c++) {
+      if (clients[c].userId !== client.userId && clients[c].roomId === client.roomId) {
+
+        clients[c].emit(
+          'message', {
+          message: message,
+          userId: client.userId
+        });
+
+        console.log(
+          `Broadcast message to ${clients[c].name} [${clients[c].userId}]`
+        );
+
+      }
+    }
+
+  });
+
   // User has leaved chat.
   client.on('disconnect', () => {
 
@@ -103,7 +163,8 @@ io.on('connection', client => {
           'chatUser', [{
             id: client.userId,
             name: client.name,
-            online: false
+            online: false,
+            streaming: false
           }]);
 
       }

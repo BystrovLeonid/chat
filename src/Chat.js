@@ -2,6 +2,33 @@ import React from 'react';
 import './css/Chat.css';
 import socketIOClient from 'socket.io-client';
 
+
+// async function makeCall() {
+//   this.state.peerConnection = new RTCPeerConnection({ 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] });
+
+//   this.state.peerConnection.onconnectionstatechange = (event) => {
+//     if (this.state.peerConnection.connectionState === 'connected') {
+//       console.log("local peer connected");
+//     }
+//     console.log(this.state.peerConnection.connectionState);
+//   };
+
+//   this.state.peerConnection.onicecandidate = (event) => {
+//     if (event.candidate) {
+//       this.state.socket.emit('message', { 'iceCandidate': event.candidate });
+//     }
+//     console.log(event);
+//   };
+
+//   const offer = await this.state.peerConnection.createOffer();
+//   await this.state.peerConnection.setLocalDescription(offer);
+
+//   this.state.socket.emit('message', { offer: offer });
+
+//   console.log(this.state.peerConnection);
+// }
+
+
 class Chat extends React.Component {
   constructor(props) {
     super(props);
@@ -13,8 +40,66 @@ class Chat extends React.Component {
       users: [],
       messages: [],
       online: false, // this.state.socket.connected
-      streaming: false
+      // streaming: false,
+      // peerConnection: null
     };
+
+    //
+    // this.state.socket.on('message', async data => {
+
+    //   console.log(data);
+
+    //   let index = -1;
+    //   for (let i = 0; i < this.state.users.length; i++) {
+    //     if (this.state.users[i].id === data.userId) {
+    //       index = i;
+    //       break;
+    //     }
+    //   }
+
+    //   if (data.message.offer) {
+
+    //     if (index > -1) {
+    //       this.state.users[index].peerConnection = new RTCPeerConnection({ 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] });
+
+    //       this.state.users[index].peerConnection.onconnectionstatechange = (event) => {
+    //         if (this.state.users[index].peerConnection.connectionState === 'connected') {
+    //           console.log("remote peer connected");
+    //         }
+    //         console.log(this.state.users[index].peerConnection.connectionState);
+    //       };
+
+    //       this.state.users[index].peerConnection.onicecandidate = (event) => {
+    //         if (event.candidate) {
+    //           this.state.socket.emit('message', { 'iceCandidate': event.candidate });
+    //         }
+    //         console.log(event);
+    //       };
+
+    //       this.state.users[index].peerConnection.setRemoteDescription(new RTCSessionDescription(data.message.offer));
+    //       const answer = await this.state.users[index].peerConnection.createAnswer();
+    //       await this.state.users[index].peerConnection.setLocalDescription(answer);
+    //       this.state.socket.emit('message', { answer: answer });
+    //     }
+
+    //     console.log(this.state.users[index].peerConnection);
+    //   }
+
+    //   if (data.message.answer) {
+    //     const remoteDesc = new RTCSessionDescription(data.message.answer);
+    //     await this.state.peerConnection.setRemoteDescription(remoteDesc);
+    //   }
+
+    //   if (data.message.iceCandidate) {
+    //     if (index > -1) {
+    //       try {
+    //         await this.state.users[index].peerConnection.addIceCandidate(data.message.iceCandidate);
+    //       } catch (e) {
+    //         console.error('Error adding received ice candidate', e);
+    //       }
+    //     }
+    //   }
+    // });
 
     // On server authorized user.
     this.state.socket.on('loginUser', data => {
@@ -60,15 +145,15 @@ class Chat extends React.Component {
       this.setState({ messages: this.state.messages });
     });
 
-    // Then user joined or leaved chat.
+    // Then user joined or leaved chat, update list.
     this.state.socket.on('chatUser', chatUser => {
       chatUser.forEach(u => {
+        // Remove from user list.
+        // eslint-disable-next-line
+        this.state.users = this.state.users.filter(e => e.id !== u.id);
+        // If user online then add to user list.
         if (u.online) {
-          // Add to user list.
           this.state.users.push(u);
-        } else {
-          // Remove from user list.
-          this.state.users = this.state.users.filter(e => e.id !== u.id);
         }
       });
 
@@ -79,55 +164,75 @@ class Chat extends React.Component {
     this.loginUser = this.loginUser.bind(this);
     this.reLoginUser = this.reLoginUser.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
-    this.startStream = this.startStream.bind(this);
+
+    // this.startStream = this.startStream.bind(this);
+    // this.makeCall = makeCall.bind(this);
   }
 
   //
-  startStream(e) {
+  // startStream(e) {
 
-    const constraints = {
-      'video': true,
-      'audio': true
-    }
+  //   if (!navigator.mediaDevices) {
+  //     return;
+  //   }
 
-    if (this.state.streaming) { // Start streaming.
+  //   if (this.state.streaming) { // Stop streaming.
 
-      document.getElementById(this.state.userId).srcObject.getTracks().forEach(
-        track => track.stop()
-      );
+  //     document.getElementById(this.state.userId).srcObject.getTracks().forEach(
+  //       track => track.stop()
+  //     );
 
-      this.setState({ streaming: false });
-    } else { // Stop streaming.
-      this.setState({ streaming: true });
+  //     this.state.socket.emit(
+  //       'stream', {
+  //       id: this.state.userId,
+  //       streaming: false
+  //     });
 
-      setTimeout(() => {
+  //     this.setState({ streaming: false });
+  //   } else { // Start streaming.
+  //     this.setState({ streaming: true });
 
-        navigator.mediaDevices.getUserMedia(constraints)
-          .then(stream => {
-            console.log('Got MediaStream:', stream);
-            const videoElement = document.getElementById(this.state.userId);
-            videoElement.srcObject = stream;
-          })
-          .catch(error => {
-            console.error('Error opening video camera.', error);
-            this.setState({ streaming: false });
-          });
+  //     setTimeout(() => {
 
-      }, 100);
-    }
-  }
+  //       navigator.mediaDevices.getUserMedia({
+  //         'video': true,
+  //         'audio': true
+  //       }).then(stream => {
+  //         const videoElement = document.getElementById(this.state.userId);
+  //         videoElement.srcObject = stream;
+
+  //         this.state.socket.emit(
+  //           'stream', {
+  //           id: this.state.userId,
+  //           streaming: true
+  //         });
+  //       }).catch(error => {
+  //         console.error('Error opening video camera.', error);
+  //         this.setState({ streaming: false });
+  //       });
+
+  //       this.makeCall();
+  //     }, 100);
+  //   }
+  // }
 
   // Users, left side.
   chatUsers(user) {
+
+    if (!user.name) {
+      return;
+    }
+
     let userClasses = 'Chat-user';
-    let videoClasses = 'Chat-user-camera';
+    // let videoClasses = 'Chat-user-camera';
     let id = user.id;
     let me = this.state.userId === id;
+    // let streaming = me ? this.state.streaming : user.streaming;
 
     // Streaming now.
-    if (this.state.streaming) {
-      videoClasses += ' Chat-user-camera-no-video';
-    }
+    // if (this.state.streaming) {
+    //   videoClasses += ' Chat-user-camera-no-video';
+    // }
 
     // If it's me.
     if (me) {
@@ -137,10 +242,10 @@ class Chat extends React.Component {
     return (
       <div className={userClasses} key={user.id}>
         <div className="Chat-user-name">
-          {user.name}
-          {me && <button className={videoClasses} onClick={this.startStream}></button>}
+          <span>{user.name}</span>
+          {/* {me && <button className={videoClasses} onClick={this.startStream}></button>} */}
         </div>
-        {me && this.state.streaming && <video className="Chat-user-video" id={id} autoPlay playsInline />}
+        {/* {streaming && <video className="Chat-user-video" id={id} autoPlay playsInline />} */}
       </div>
     );
   }
@@ -251,7 +356,7 @@ class Chat extends React.Component {
           this.state.online
             ?
             <form className="Chat-userlogin" onSubmit={this.loginUser}>
-              <input type="text" name="user" ref={(l) => { this.loginInputField = l; }} />
+              <input type="text" name="user" maxLength="8" ref={(l) => { this.loginInputField = l; }} />
               <input type="submit" value="Login" />
             </form>
             :
